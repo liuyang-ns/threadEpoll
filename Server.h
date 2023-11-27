@@ -25,3 +25,6 @@ const char* getFileType(const char* name);
 
 //·¢ËÍÄ¿Â¼
 int sendDir(const char* dirName, int cfd);
+
+int hexToDec(char c);
+void decodeMsg(char* to, char* from);
