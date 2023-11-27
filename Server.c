@@ -1,4 +1,4 @@
-#include "Server.h"
+ï»¿#include "Server.h"
 #include <arpa/inet.h>
 #include <sys/epoll.h>
 #include <stdio.h>
@@ -16,14 +16,14 @@
 
 int initListenFd(unsigned short port)
 {
-	//´´½¨¼àÌıµÄfd
+	//åˆ›å»ºç›‘å¬çš„fd
 	int lfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (lfd == -1)
 	{
 		perror("socket");
 		return -1;
 	}
-	//ÉèÖÃ¶Ë¿Ú¸´ÓÃ
+	//è®¾ç½®ç«¯å£å¤ç”¨
 	int opt = 1;
 	int ret = setsockopt(lfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt);
 	if (ret == -1)
@@ -31,7 +31,7 @@ int initListenFd(unsigned short port)
 		perror("setsockopt");
 		return -1;
 	}
-	//°ó¶¨
+	//ç»‘å®š
 	struct sockaddr_in addr;
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(port);
@@ -42,27 +42,27 @@ int initListenFd(unsigned short port)
 		perror("bind");
 		return -1;
 	}
-	//ÉèÖÃ¼àÌı
+	//è®¾ç½®ç›‘å¬
 	ret = listen(lfd, 128);
 	if (ret == -1)
 	{
 		perror("listen");
 		return -1;
 	}
-	//·µ»Øfd
+	//è¿”å›fd
 	return lfd;
 }
 
 int epollRun(int lfd)
 {
-	//´´½¨epollÊµÀı
+	//åˆ›å»ºepollå®ä¾‹
 	int epfd = epoll_create(1);
 	if (epfd == -1)
 	{
 		perror("epoll_create");
 		return -1;
 	}
-	//lfdÉÏÊ÷
+	//lfdä¸Šæ ‘
 	struct epoll_event ev;
 	ev.data.fd = lfd;
 	ev.events = EPOLLIN;
@@ -72,7 +72,7 @@ int epollRun(int lfd)
 		perror("epoll_ctl");
 		return -1;
 	}
-	//¼ì²â
+	//æ£€æµ‹
 	struct epoll_event evs[1024];
 	int size = sizeof(evs) / sizeof(struct epoll_event);
 	while (1)
@@ -83,12 +83,12 @@ int epollRun(int lfd)
 			int fd = evs[i].data.fd;
 			if (fd == lfd)
 			{
-				//½¨Á¢ĞÂÁ¬½Ó accept
+				//å»ºç«‹æ–°è¿æ¥ accept
 				acceptClient(lfd, epfd);
 			}
 			else
 			{
-				//Ö÷Òª½ÓÊÕ¶Ô¶ËµÄÊı¾İ
+				//ä¸»è¦æ¥æ”¶å¯¹ç«¯çš„æ•°æ®
 				recvHttpRequest(fd, epfd);
 			}
 		}
@@ -99,7 +99,7 @@ int epollRun(int lfd)
 int acceptClient(int lfd, int epfd)
 {
 	printf("start to bulid new connection\n");
-	//½¨Á¢Á¬½Ó
+	//å»ºç«‹è¿æ¥
 	int cfd = accept(lfd, NULL, NULL);
 	if (cfd == -1)
 	{
@@ -107,12 +107,12 @@ int acceptClient(int lfd, int epfd)
 		return -1;
 	}
 
-	//ÉèÖÃ·Ç×èÈû
+	//è®¾ç½®éé˜»å¡
 	int flag = fcntl(cfd, F_GETFL);
 	flag |= O_NONBLOCK;
 	fcntl(cfd, F_SETFL, flag);
 
-	//cfdÌí¼Óµ½epollÖĞ
+	//cfdæ·»åŠ åˆ°epollä¸­
 	struct epoll_event ev;
 	ev.data.fd = cfd;
 	ev.events = EPOLLIN | EPOLLET;
@@ -140,10 +140,10 @@ int recvHttpRequest(int cfd, int epfd)
 		}
 		totle += len;
 	}
-	//ÅĞ¶ÏÊı¾İÊÇ·ñ½ÓÊÕÍê±Ï
+	//åˆ¤æ–­æ•°æ®æ˜¯å¦æ¥æ”¶å®Œæ¯•
 	if (len == -1 && errno == EAGAIN)
 	{
-		//½âÎöÇëÇóĞĞ
+		//è§£æè¯·æ±‚è¡Œ
 		char* pt = strstr(buf, "\r\n");
 		int reqLen = pt - buf;
 		buf[reqLen] = '\0';
@@ -152,7 +152,7 @@ int recvHttpRequest(int cfd, int epfd)
 	}
 	else if (len == 0)
 	{
-		//¿Í»§¶Ë¶Ï¿ªÁËÁ¬½Ó
+		//å®¢æˆ·ç«¯æ–­å¼€äº†è¿æ¥
 		epoll_ctl(epfd, EPOLL_CTL_DEL, cfd, NULL);
 		close(cfd);
 	}
@@ -165,7 +165,7 @@ int recvHttpRequest(int cfd, int epfd)
 
 int parseRequestLine(const char * line, int cfd)
 {
-	//½âÎöÇëÇóĞĞ get /xxx/1.jpg http/1.1  
+	//è§£æè¯·æ±‚è¡Œ get /xxx/1.jpg http/1.1  
 	char method[12];
 	char path[1024];
 	sscanf(line, "%[^ ] %[^ ]", method, path);
@@ -174,7 +174,8 @@ int parseRequestLine(const char * line, int cfd)
 	{
 		return -1;
 	}
-	//´¦Àí¿Í»§¶ËÇëÇóµÄ¾²Ì¬×ÊÔ´£¨Ä¿Â¼»òÕßÎÄ¼ş£©
+	decodeMsg(path, path);
+	//å¤„ç†å®¢æˆ·ç«¯è¯·æ±‚çš„é™æ€èµ„æºï¼ˆç›®å½•æˆ–è€…æ–‡ä»¶ï¼‰
 	char* file = NULL;
 	if (strcmp(path, "/") == 0)
 	{
@@ -184,27 +185,27 @@ int parseRequestLine(const char * line, int cfd)
 	{
 		file = path + 1;
 	}
-	//»ñÈ¡ÎÄ¼şÊôĞÔ
+	//è·å–æ–‡ä»¶å±æ€§
 	struct stat st;
 	int ret = stat(file, &st);
 	if (ret == -1)
 	{
-		//ÎÄ¼ş²»´æÔÚ -- »Ø¸´404
+		//æ–‡ä»¶ä¸å­˜åœ¨ -- å›å¤404
 		sendHeadMsg(cfd, 404, "Not Found", getFileType(".html"), -1);
 		sendFile("404.html", cfd);
 		return 0;
 	}
-	//ÅĞ¶ÏÎÄ¼şÀàĞÍ
+	//åˆ¤æ–­æ–‡ä»¶ç±»å‹
 	if (S_ISDIR(st.st_mode))
 	{
-		//°Ñ±¾µØÄ¿Â¼ÖĞµÄÄÚÈİ·¢ËÍ¸ø¿Í»§¶Ë
+		//æŠŠæœ¬åœ°ç›®å½•ä¸­çš„å†…å®¹å‘é€ç»™å®¢æˆ·ç«¯
 		sendHeadMsg(cfd, 200, "OK", getFileType(".html"), -1);
 		sendDir(file, cfd);
 
 	}
 	else
 	{
-		//°ÑÎÄ¼şµÄÄÚÈİ·¢ËÍ¸ø¿Í»§¶Ë
+		//æŠŠæ–‡ä»¶çš„å†…å®¹å‘é€ç»™å®¢æˆ·ç«¯
 		sendHeadMsg(cfd, 200, "OK", getFileType(file), st.st_size);
 		sendFile(file, cfd);
 	}
@@ -214,10 +215,10 @@ int parseRequestLine(const char * line, int cfd)
 const char* getFileType(const char* name)
 {
 	// a.jpg a.mp4 a.html
-	// ×ÔÓÒÏò×ó²éÕÒ¡®.¡¯×Ö·û, Èç²»´æÔÚ·µ»ØNULL
+	// è‡ªå³å‘å·¦æŸ¥æ‰¾â€˜.â€™å­—ç¬¦, å¦‚ä¸å­˜åœ¨è¿”å›NULL
 	const char* dot = strrchr(name, '.');
 	if (dot == NULL)
-		return "text/plain; charset=utf-8";	// ´¿ÎÄ±¾
+		return "text/plain; charset=utf-8";	// çº¯æ–‡æœ¬
 	if (strcmp(dot, ".html") == 0 || strcmp(dot, ".htm") == 0)
 		return "text/html; charset=utf-8";
 	if (strcmp(dot, ".jpg") == 0 || strcmp(dot, ".jpeg") == 0)
@@ -281,7 +282,7 @@ int sendDir(const char * dirName, int cfd)
 	for (int i = 0; i < num; ++i)
 	{
 
-		//È¡³öÎÄ¼şÃû namelistÖ¸ÏòµÄÊÇÒ»¸öÖ¸ÕëÊı×é struct dirent* tmp[];
+		//å–å‡ºæ–‡ä»¶å namelistæŒ‡å‘çš„æ˜¯ä¸€ä¸ªæŒ‡é’ˆæ•°ç»„ struct dirent* tmp[];
 		char *name = namelist[i]->d_name;
 		struct stat st;
 		char subPath[1024] = { 0 };
@@ -289,7 +290,7 @@ int sendDir(const char * dirName, int cfd)
 		stat(subPath, &st);
 		if (S_ISDIR(st.st_mode))
 		{
-			//a±êÇ© <a href="">name</a>
+			//aæ ‡ç­¾ <a href="">name</a>
 			sprintf(buf + strlen(buf), "<tr><td><a href=\"%s/\">%s</a></td><td>%ld</td></tr>", name, name, st.st_size);
 		}
 		else
@@ -308,7 +309,7 @@ int sendDir(const char * dirName, int cfd)
 
 int sendFile(const char * fileName, int cfd)
 {
-	//´ò¿ªÎÄ¼ş
+	//æ‰“å¼€æ–‡ä»¶
 	int fd = open(fileName, O_RDONLY);
 	assert(fd > 0);
 #if 0
@@ -319,7 +320,7 @@ int sendFile(const char * fileName, int cfd)
 		if (len > 0)
 		{
 			send(cfd, buf, len, 0);
-			usleep(10);//Õâ·Ç³£ÖØÒª
+			usleep(10);//è¿™éå¸¸é‡è¦
 		}
 		else if (len == 0)
 		{
@@ -331,18 +332,30 @@ int sendFile(const char * fileName, int cfd)
 		}
 	}
 #else
+	off_t  offset = 0;
 	int size = lseek(fd, 0, SEEK_END);
-	sendfile(cfd, fd, NULL, size);
+	lseek(fd, 0, SEEK_SET);
+	while (offset < size)
+	{
+		int ret = sendfile(cfd, fd, &offset, size - offset);
+		printf("ret value: %d\n", ret);
+		if (ret == -1 && errno == EAGAIN)
+		{
+			printf("æ²¡æ•°æ®...\n");
+		}
+	}
+	
 #endif
+	close(fd);
 	return 0;
 }
 
 int sendHeadMsg(int cfd, int status, const char * descr, const char * type, int length)
 {
-	//×´Ì¬ĞĞ
+	//çŠ¶æ€è¡Œ
 	char buf[4096] = { 0 };
 	sprintf(buf, "http/1.1 %d %s\r\n", status, descr);
-	//ÏìÓ¦Í·
+	//å“åº”å¤´
 	sprintf(buf + strlen(buf), "content-type: %s\r\n", type);
 	sprintf(buf + strlen(buf), "content-length: %d\r\n\r\n", length);
 
@@ -350,7 +363,43 @@ int sendHeadMsg(int cfd, int status, const char * descr, const char * type, int 
 	return 0;
 }
 
+// å°†å­—ç¬¦è½¬æ¢ä¸ºæ•´å½¢æ•°
+int hexToDec(char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return c - 'a' + 10;
+	if (c >= 'A' && c <= 'F')
+		return c - 'A' + 10;
 
+	return 0;
+}
 
+// è§£ç 
+// to å­˜å‚¨è§£ç ä¹‹åçš„æ•°æ®, ä¼ å‡ºå‚æ•°, fromè¢«è§£ç çš„æ•°æ®, ä¼ å…¥å‚æ•°
+void decodeMsg(char* to, char* from)
+{
+	for (; *from != '\0'; ++to, ++from)
+	{
+		// isxdigit -> åˆ¤æ–­å­—ç¬¦æ˜¯ä¸æ˜¯16è¿›åˆ¶æ ¼å¼, å–å€¼åœ¨ 0-f
+		// Linux%E5%86%85%E6%A0%B8.jpg
+		if (from[0] == '%' && isxdigit(from[1]) && isxdigit(from[2]))
+		{
+			// å°†16è¿›åˆ¶çš„æ•° -> åè¿›åˆ¶ å°†è¿™ä¸ªæ•°å€¼èµ‹å€¼ç»™äº†å­—ç¬¦ int -> char
+			// B2 == 178
+			// å°†3ä¸ªå­—ç¬¦, å˜æˆäº†ä¸€ä¸ªå­—ç¬¦, è¿™ä¸ªå­—ç¬¦å°±æ˜¯åŸå§‹æ•°æ®
+			*to = hexToDec(from[1]) * 16 + hexToDec(from[2]);
 
+			// è·³è¿‡ from[1] å’Œ from[2] å› æ­¤åœ¨å½“å‰å¾ªç¯ä¸­å·²ç»å¤„ç†è¿‡äº†
+			from += 2;
+		}
+		else
+		{
+			// å­—ç¬¦æ‹·è´, èµ‹å€¼
+			*to = *from;
+		}
 
+	}
+	*to = '\0';
+}
