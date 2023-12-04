@@ -102,7 +102,7 @@ int epollRun(int lfd)
 			{
 				//主要接收对端的数据
 				//recvHttpRequest(fd, epfd);
-				pthread_create(&info->fd, NULL, recvHttpRequest, info);
+				pthread_create(&info->tid, NULL, recvHttpRequest, info);
 			}
 			free(info);
 		}
