@@ -104,7 +104,6 @@ int epollRun(int lfd)
 				//recvHttpRequest(fd, epfd);
 				pthread_create(&info->tid, NULL, recvHttpRequest, info);
 			}
-			free(info);
 		}
 	}
 	return 0;
